@@ -3,11 +3,11 @@ import { Router } from 'express';
 import TransactionsRepository from '../repositories/TransactionsRepository';
 import CreateTransactionService from '../services/CreateTransactionService';
 
-const transactionRouter = Router();
+const transactionsRouter = Router();
 
 const transactionsRepository = new TransactionsRepository();
 
-transactionRouter.get('/', (req, res) => {
+transactionsRouter.get('/', (req, res) => {
   try {
     const transactions = transactionsRepository.all();
 
@@ -22,7 +22,7 @@ transactionRouter.get('/', (req, res) => {
   }
 });
 
-transactionRouter.post('/', (req, res) => {
+transactionsRouter.post('/', (req, res) => {
   try {
     const { title, value, type } = req.body;
 
@@ -42,4 +42,12 @@ transactionRouter.post('/', (req, res) => {
   }
 });
 
-export default transactionRouter;
+transactionsRouter.delete('/:id', async (req, res) => {
+  // TODO
+});
+
+transactionsRouter.post('/import', async (req, res) => {
+  // TODO
+});
+
+export default transactionsRouter;
