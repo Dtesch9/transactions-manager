@@ -18,16 +18,15 @@ transactionsRouter.get('/', async (req, res) => {
   }
 });
 
-transactionsRouter.post('/', (req, res) => {
+transactionsRouter.post('/', async (req, res) => {
   try {
-    const { title, value, type } = req.body;
+    const { title, category, value, type } = req.body;
 
-    const createTransactionService = new CreateTransactionService(
-      transactionsRepository,
-    );
+    const createTransactionService = new CreateTransactionService();
 
-    const transaction = createTransactionService.execute({
+    const transaction = await createTransactionService.execute({
       title,
+      category,
       value,
       type,
     });
@@ -38,12 +37,12 @@ transactionsRouter.post('/', (req, res) => {
   }
 });
 
-transactionsRouter.delete('/:id', async (req, res) => {
-  // TODO
-});
+// transactionsRouter.delete('/:id', async (req, res) => {
+//   // TODO
+// });
 
-transactionsRouter.post('/import', async (req, res) => {
-  // TODO
-});
+// transactionsRouter.post('/import', async (req, res) => {
+//   // TODO
+// });
 
 export default transactionsRouter;

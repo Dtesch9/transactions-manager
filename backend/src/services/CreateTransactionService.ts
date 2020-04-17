@@ -1,35 +1,53 @@
+import { getCustomRepository } from 'typeorm';
+
 import TransactionsRepository from '../repositories/TransactionsRepository';
+import CategoriesRepository from '../repositories/CategoriesRepository';
 import Transaction from '../models/Transaction';
 
 interface Request {
   title: string;
+  category: string;
   value: number;
   type: 'income' | 'outcome';
 }
 
 class CreateTransactionService {
-  private transactionsRepository: TransactionsRepository;
+  public async execute({
+    title,
+    category,
+    value,
+    type,
+  }: Request): Promise<Transaction> {
+    const transactionsRepository = getCustomRepository(TransactionsRepository);
 
-  constructor(transactionsRepository: TransactionsRepository) {
-    this.transactionsRepository = transactionsRepository;
-  }
-
-  public execute({ title, value, type }: Request): Transaction {
     if (type !== 'income' && type !== 'outcome') {
       throw Error('Type not allowed');
     }
 
-    const { total } = this.transactionsRepository.getBalance();
+    const {
+      balance: { total },
+    } = await transactionsRepository.getBalance();
 
-    if (type === 'outcome' && total - value < 0) {
-      throw Error('Transactions that let your balance negative not allowed');
+    const negativeBalanceAfterOutcome = type === 'outcome' && total - value < 0;
+
+    if (negativeBalanceAfterOutcome) {
+      throw Error('Transactions that let your negative balance not allowed');
     }
 
-    const transaction = this.transactionsRepository.create({
+    const categoriesRepository = getCustomRepository(CategoriesRepository);
+
+    const { id } = await categoriesRepository.findOneOrCreate({
+      category,
+    });
+
+    const transaction = transactionsRepository.create({
       title,
+      category_id: id,
       value,
       type,
     });
+
+    await transactionsRepository.save(transaction);
 
     return transaction;
   }
