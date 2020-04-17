@@ -4,6 +4,8 @@ import TransactionsRepository from '../repositories/TransactionsRepository';
 import CategoriesRepository from '../repositories/CategoriesRepository';
 import Transaction from '../models/Transaction';
 
+import AppError from '../error/AppError';
+
 interface Request {
   title: string;
   category: string;
@@ -21,7 +23,7 @@ class CreateTransactionService {
     const transactionsRepository = getCustomRepository(TransactionsRepository);
 
     if (type !== 'income' && type !== 'outcome') {
-      throw Error('Type not allowed');
+      throw new AppError('Type not allowed');
     }
 
     const {
@@ -31,7 +33,10 @@ class CreateTransactionService {
     const negativeBalanceAfterOutcome = type === 'outcome' && total - value < 0;
 
     if (negativeBalanceAfterOutcome) {
-      throw Error('Transactions that let your negative balance not allowed');
+      throw new AppError(
+        'Transactions that let your negative balance not allowed',
+        401,
+      );
     }
 
     const categoriesRepository = getCustomRepository(CategoriesRepository);

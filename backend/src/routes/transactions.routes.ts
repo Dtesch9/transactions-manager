@@ -7,34 +7,26 @@ import CreateTransactionService from '../services/CreateTransactionService';
 const transactionsRouter = Router();
 
 transactionsRouter.get('/', async (req, res) => {
-  try {
-    const transactionsRepository = getCustomRepository(TransactionsRepository);
+  const transactionsRepository = getCustomRepository(TransactionsRepository);
 
-    const balance = await transactionsRepository.getBalance();
+  const balance = await transactionsRepository.getBalance();
 
-    return res.json(balance);
-  } catch (err) {
-    return res.status(400).json({ error: err.message });
-  }
+  return res.json(balance);
 });
 
 transactionsRouter.post('/', async (req, res) => {
-  try {
-    const { title, category, value, type } = req.body;
+  const { title, category, value, type } = req.body;
 
-    const createTransactionService = new CreateTransactionService();
+  const createTransactionService = new CreateTransactionService();
 
-    const transaction = await createTransactionService.execute({
-      title,
-      category,
-      value,
-      type,
-    });
+  const transaction = await createTransactionService.execute({
+    title,
+    category,
+    value,
+    type,
+  });
 
-    return res.json(transaction);
-  } catch (err) {
-    return res.status(400).json({ error: err.message });
-  }
+  return res.json(transaction);
 });
 
 // transactionsRouter.delete('/:id', async (req, res) => {

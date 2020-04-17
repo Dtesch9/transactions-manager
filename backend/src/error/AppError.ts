@@ -1,14 +1,9 @@
-interface Error {
-  message: string;
-  statusCode: number;
-}
-
 class AppError {
-  message: string;
+  public readonly message: string;
 
-  statusCode: number;
+  public readonly statusCode: number;
 
-  constructor({ message, statusCode = 400 }: Error) {
+  constructor(message: string, statusCode = 400) {
     this.message = message;
     this.statusCode = statusCode;
   }
