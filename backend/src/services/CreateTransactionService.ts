@@ -35,7 +35,7 @@ class CreateTransactionService {
     if (negativeBalanceAfterOutcome) {
       throw new AppError(
         'Transactions that let your negative balance not allowed',
-        401,
+        400,
       );
     }
 
