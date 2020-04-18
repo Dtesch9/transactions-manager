@@ -51,30 +51,34 @@ class ImportTransactionService {
 
     const CategoriesDifferentFromExistents = csvTransactions
       .map(transaction => {
-        const hasDifferentCategory = !!categories.filter(
-          cat => transaction.category !== cat.title,
+        const hasEqualCategory = !!categories.find(
+          cat => transaction.category === cat.title,
         );
 
-        return hasDifferentCategory && transaction;
+        return !hasEqualCategory ? transaction : ({} as FileCsv);
       })
       .map(eachCategory => ({ category: eachCategory.category }));
 
-    const csvCategories = CategoriesDifferentFromExistents.map(
-      cat => cat.category,
-    )
-      .filter((category, index, categoriesArray) => {
-        return categoriesArray.indexOf(category) === index;
-      })
-      .map(category => categoriesRepository.create({ title: category }));
+    const csvCategories = [];
 
-    await getConnection()
-      .createQueryBuilder()
-      .insert()
-      .into(Category)
-      .values(csvCategories)
-      .execute();
+    if (CategoriesDifferentFromExistents[0].category) {
+      const newCategories = CategoriesDifferentFromExistents.map(
+        cat => cat.category,
+      )
+        .filter((category, index, categoriesArray) => {
+          return categoriesArray.indexOf(category) === index;
+        })
+        .map(category => categoriesRepository.create({ title: category }));
 
-    console.log(csvCategories);
+      await getConnection()
+        .createQueryBuilder()
+        .insert()
+        .into(Category)
+        .values(newCategories)
+        .execute();
+
+      csvCategories.push(...newCategories);
+    }
 
     const allExistentCategories = [...categories, ...csvCategories];
 
