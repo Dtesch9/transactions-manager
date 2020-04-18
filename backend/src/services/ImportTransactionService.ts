@@ -6,6 +6,7 @@ import { getConnection, getCustomRepository } from 'typeorm';
 import uploadConfig from '../config/upload';
 
 import Transaction from '../models/Transaction';
+import Category from '../models/Category';
 
 import TransactionsRepository from '../repositories/TransactionsRepository';
 import CategoriesRepository from '../repositories/CategoriesRepository';
@@ -46,17 +47,42 @@ class ImportTransactionService {
     const categoriesRepository = getCustomRepository(CategoriesRepository);
     const transactionsRepository = getCustomRepository(TransactionsRepository);
 
-    const categoriesPromise = csvTransactions.map(async ({ category }) => {
-      const results = await categoriesRepository.findOneOrCreate({ category });
+    const categories = await categoriesRepository.find();
 
-      return results;
-    });
+    const CategoriesDifferentFromExistents = csvTransactions
+      .map(transaction => {
+        const hasDifferentCategory = !!categories.filter(
+          cat => transaction.category !== cat.title,
+        );
 
-    const categories = await Promise.all(categoriesPromise);
+        return hasDifferentCategory && transaction;
+      })
+      .map(eachCategory => ({ category: eachCategory.category }));
+
+    const csvCategories = CategoriesDifferentFromExistents.map(
+      cat => cat.category,
+    )
+      .filter((category, index, categoriesArray) => {
+        return categoriesArray.indexOf(category) === index;
+      })
+      .map(category => categoriesRepository.create({ title: category }));
+
+    await getConnection()
+      .createQueryBuilder()
+      .insert()
+      .into(Category)
+      .values(csvCategories)
+      .execute();
+
+    console.log(csvCategories);
+
+    const allExistentCategories = [...categories, ...csvCategories];
 
     const transactions = csvTransactions.map(
       ({ category, title, type, value }) => {
-        const foundCategory = categories.find(cat => cat.title === category);
+        const foundCategory = allExistentCategories.find(
+          cat => cat.title === category,
+        );
 
         return transactionsRepository.create({
           title,
