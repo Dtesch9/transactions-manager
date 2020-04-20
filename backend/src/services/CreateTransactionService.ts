@@ -41,13 +41,13 @@ class CreateTransactionService {
 
     const categoriesRepository = getCustomRepository(CategoriesRepository);
 
-    const { id } = await categoriesRepository.findOneOrCreate({
+    const transactionCategory = await categoriesRepository.findOneOrCreate({
       category,
     });
 
     const transaction = transactionsRepository.create({
       title,
-      category_id: id,
+      category: transactionCategory,
       value,
       type,
     });
