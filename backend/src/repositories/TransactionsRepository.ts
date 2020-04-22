@@ -18,22 +18,24 @@ class TransactionsRepository extends Repository<Transaction> {
 
     const totalBalance = transactions.reduce(
       (balanceCalc, transaction) => {
-        const { type } = transaction;
+        const { type, value } = transaction;
 
-        balanceCalc[type] += transaction.value;
-
-        balanceCalc.total = balanceCalc.income - balanceCalc.outcome;
+        balanceCalc[type] += Number(value);
 
         return balanceCalc;
       },
       {
         income: 0,
         outcome: 0,
-        total: 0,
       },
     );
 
-    return { transactions, balance: totalBalance };
+    const balance = {
+      ...totalBalance,
+      total: totalBalance.income - totalBalance.outcome,
+    };
+
+    return { transactions, balance };
   }
 }
 
