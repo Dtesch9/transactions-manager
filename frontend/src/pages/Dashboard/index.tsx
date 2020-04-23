@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { parseISO, format } from 'date-fns';
+import { pt } from 'date-fns/locale';
 
 import income from '../../assets/income.svg';
 import outcome from '../../assets/outcome.svg';
@@ -20,26 +22,56 @@ interface Transaction {
   formattedDate: string;
   type: 'income' | 'outcome';
   category: { title: string };
-  created_at: Date;
+  created_at: string;
 }
 
 interface Balance {
-  income: string;
-  outcome: string;
-  total: string;
+  income: number;
+  outcome: number;
+  total: number;
+}
+
+interface AxiosReponse {
+  transactions: Transaction[];
+  balance: Balance;
 }
 
 const Dashboard: React.FC = () => {
-  // const [transactions, setTransactions] = useState<Transaction[]>([]);
-  // const [balance, setBalance] = useState<Balance>({} as Balance);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [balance, setBalance] = useState<Balance>({} as Balance);
+
+  const formatTransactions = useCallback(
+    (data: Transaction[]): Transaction[] => {
+      return data.map(transaction => {
+        const formattedValue = formatValue(transaction.value);
+        const formattedDate = format(
+          parseISO(transaction.created_at),
+          'dd/MM/yyyy',
+          {
+            locale: pt,
+          },
+        );
+
+        return { ...transaction, formattedValue, formattedDate };
+      });
+    },
+    [],
+  );
 
   useEffect(() => {
     async function loadTransactions(): Promise<void> {
-      // TODO
+      const response = await api.get<AxiosReponse>('transactions');
+
+      const formattedTransactions = formatTransactions(
+        response.data.transactions,
+      );
+
+      setTransactions(formattedTransactions);
+      setBalance(response.data.balance);
     }
 
     loadTransactions();
-  }, []);
+  }, [formatTransactions]);
 
   return (
     <>
@@ -51,21 +83,23 @@ const Dashboard: React.FC = () => {
               <p>Entradas</p>
               <img src={income} alt="Income" />
             </header>
-            <h1 data-testid="balance-income">R$ 5.000,00</h1>
+            <h1 data-testid="balance-income">{formatValue(balance.income)}</h1>
           </Card>
           <Card>
             <header>
               <p>Saídas</p>
               <img src={outcome} alt="Outcome" />
             </header>
-            <h1 data-testid="balance-outcome">R$ 1.000,00</h1>
+            <h1 data-testid="balance-outcome">
+              {formatValue(balance.outcome)}
+            </h1>
           </Card>
           <Card total>
             <header>
               <p>Total</p>
               <img src={total} alt="Total" />
             </header>
-            <h1 data-testid="balance-total">R$ 4000,00</h1>
+            <h1 data-testid="balance-total">{formatValue(balance.total)}</h1>
           </Card>
         </CardContainer>
 
@@ -81,18 +115,18 @@ const Dashboard: React.FC = () => {
             </thead>
 
             <tbody>
-              <tr>
-                <td className="title">Computer</td>
-                <td className="income">R$ 5.000,00</td>
-                <td>Sell</td>
-                <td>20/04/2020</td>
-              </tr>
-              <tr>
-                <td className="title">Website Hosting</td>
-                <td className="outcome">- R$ 1.000,00</td>
-                <td>Hosting</td>
-                <td>19/04/2020</td>
-              </tr>
+              {transactions.map(transaction => (
+                <tr key={transaction.id}>
+                  <td className="title">{transaction.title}</td>
+                  <td className={transaction.type}>
+                    {transaction.type === 'outcome'
+                      ? `- ${transaction.formattedValue}`
+                      : transaction.formattedValue}
+                  </td>
+                  <td>{transaction.category.title}</td>
+                  <td>{transaction.formattedDate}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </TableContainer>
