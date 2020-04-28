@@ -15,7 +15,7 @@
   
 ## About the Project
 
-Application to manager your transactions build with Express and Typescript
+Application to manager your transactions build with Express, Typescript and ReactJS
 
 <br />
 <p align="center">
